@@ -377,6 +377,42 @@ func (api *ApiV2) WebWxSendMsg(common *Common, ce *XmlConfig, cookies []*http.Co
 	return body, nil
 }
 
+// WebWxSendMsg: webwxsendmsg api
+func (api *ApiV2) WebWxSendMsgByType(msgType int, common *Common, ce *XmlConfig, cookies []*http.Cookie,
+	from, to string, msg string) ([]byte, error) {
+
+	km := url.Values{}
+	km.Add("pass_ticket", ce.PassTicket)
+
+	uri := common.CgiUrl + "/webwxsendmsg?" + km.Encode()
+
+	js := InitReqBody{
+		BaseRequest: &BaseRequest{
+			ce.Wxuin,
+			ce.Wxsid,
+			ce.Skey,
+			common.DeviceID,
+		},
+		Msg: &TextMessage{
+			Type:         msgType,
+			Content:      msg,
+			FromUserName: from,
+			ToUserName:   to,
+			LocalID:      int(time.Now().Unix() * 1e4),
+			ClientMsgId:  int(time.Now().Unix() * 1e4),
+		},
+	}
+
+	b, _ := json.Marshal(js)
+
+	jar, _ := cookiejar.New(nil)
+	u, _ := url.Parse(uri)
+	jar.SetCookies(u, cookies)
+	api.httpClient.SetJar(jar)
+	body, _ := api.httpClient.PostJsonByte(uri, b)
+	return body, nil
+}
+
 // WebWxUploadMedia: webwxuploadmedia api
 func (api *ApiV2) WebWxUploadMedia(common *Common, ce *XmlConfig, cookies []*http.Cookie,
 	filename string, content []byte) (string, error) {

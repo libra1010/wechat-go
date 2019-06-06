@@ -517,6 +517,23 @@ func (s *Session) SendText(msg, from, to string) (string, string, error) {
 	return msgID, localID, nil
 }
 
+func (s *Session) SendTextByType(msgType int, msg, from, to string) (string, string, error) {
+	b, err := s.Api.WebWxSendMsgByType(msgType, s.WxWebCommon, s.WxWebXcg, s.GetCookies(), from, to, msg)
+	if err != nil {
+		return "", "", err
+	}
+	jc, _ := rrconfig.LoadJsonConfigFromBytes(b)
+	ret, _ := jc.GetInt("BaseResponse.Ret")
+	if ret != 0 {
+		errMsg, _ := jc.GetString("BaseResponse.ErrMsg")
+		return "", "", fmt.Errorf("WebWxSendMsg Ret=%d, ErrMsg=%s", ret, errMsg)
+	}
+	msgID, _ := jc.GetString("MsgID")
+	localID, _ := jc.GetString("LocalID")
+	return msgID, localID, nil
+}
+
+
 // SendImg: send img, upload then send
 func (s *Session) SendImg(path, from, to string) {
 	ss := strings.Split(path, "/")
